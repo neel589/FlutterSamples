@@ -7,7 +7,10 @@ import Flutter
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplicationLaunchOptionsKey: Any]?
   ) -> Bool {
-    GeneratedPluginRegistrant.register(with: self)
-    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+    if (FlutterLinkedinLoginPlugin.shouldHandle(open)) {
+           return FlutterLinkedinLoginPlugin.application(app, open: open, sourceApplication: nil, annotation: nil)
+       }
+       return true
   }
 }
+

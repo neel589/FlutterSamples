@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_facebook_login/flutter_facebook_login.dart';
-import 'package:http/http.dart' as http;
 import 'package:flutter_twitter_login/flutter_twitter_login.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:http/http.dart' as http;
+
 
 GoogleSignIn _googleSignIn = GoogleSignIn(
   scopes: <String>[
@@ -15,14 +17,16 @@ GoogleSignIn _googleSignIn = GoogleSignIn(
 void main() {
   runApp(LoginPage());
 }
-
 class LoginPage extends StatefulWidget {
   @override
   _LoginPageState createState() => _LoginPageState();
 }
 
+typedef Future<void> FutureCallBack();
+
 class _LoginPageState extends State<LoginPage> {
-  bool pressed = true;
+
+  String _loginStatus = 'Press button to log in';
   bool isLoggedIn = false;
   var profileData;
   static final TwitterLogin twitterLogin = new TwitterLogin(
@@ -54,9 +58,8 @@ class _LoginPageState extends State<LoginPage> {
                   Icons.exit_to_app,
                   color: Colors.white,
                 ),
-                onPressed: () =>
-                    facebookLogin.isLoggedIn
-                        .then((isLoggedIn) => isLoggedIn ? _logout() : {}),
+                onPressed: () => facebookLogin.isLoggedIn
+                    .then((isLoggedIn) => isLoggedIn ? _logout() : {}),
               ),
             ],
           ),
@@ -71,8 +74,12 @@ class _LoginPageState extends State<LoginPage> {
                       : _displayLoginButton(),
                 ),
                 new Padding(padding: EdgeInsets.all(12.0)),
-                new Text(_message,
-                  style: TextStyle(fontSize: 15.0,fontStyle: FontStyle.italic,color: Colors.deepOrange),
+                new Text(
+                  _message,
+                  style: TextStyle(
+                      fontSize: 15.0,
+                      fontStyle: FontStyle.italic,
+                      color: Colors.deepOrange),
                 ),
                 new Center(
                   child: _displayTwitterBtn(),
@@ -81,17 +88,42 @@ class _LoginPageState extends State<LoginPage> {
                 new Center(
                   child: _displayGoogleBtn(),
                 ),
+                new Padding(padding: EdgeInsets.all(12.0)),
+                new Center(
+                  child: _displyLinkdinbtn(),
+                )
               ],
             ),
-          )
-      ),
+          )),
     );
+  }
+
+  /*_signInWithLinkedIn() async {
+    _callPlatformService(() async {
+      String status = await FlutterLinkedinLogin.loginBasic();
+      setState(() {
+        _loginStatus = status;
+      });
+    });
+  }*/
+
+  _callPlatformService(FutureCallBack callback) async {
+    try {
+      await callback();
+    } on PlatformException catch(e) {
+      debugPrint("PlatformException code: ${e.code}, message: ${e.message}, toString: ${e.toString()}");
+      setState(() {
+        _loginStatus = "code: ${e.code}, message: ${e.message}";
+      });
+    } catch (error) {
+      debugPrint("error: $error");
+    }
   }
 
   /*Facebook Login async task*/
   void initiateFacebookLogin() async {
     var facebookLoginResult =
-    await facebookLogin.logInWithReadPermissions(['email']);
+        await facebookLogin.logInWithReadPermissions(['email']);
 
     switch (facebookLoginResult.status) {
       case FacebookLoginStatus.error:
@@ -102,8 +134,7 @@ class _LoginPageState extends State<LoginPage> {
         break;
       case FacebookLoginStatus.loggedIn:
         var graphResponse = await http.get(
-            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email,picture.height(200)&access_token=${facebookLoginResult
-                .accessToken.token}');
+            'https://graph.facebook.com/v2.12/me?fields=name,first_name,last_name,email,picture.height(200)&access_token=${facebookLoginResult.accessToken.token}');
 
         var profile = json.decode(graphResponse.body);
         print(profile.toString());
@@ -112,8 +143,7 @@ class _LoginPageState extends State<LoginPage> {
         break;
     }
   }
-
-  /*get fb user profile data*/
+   /*get fb user profile data*/
   _displayUserData(profileData) {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -136,7 +166,6 @@ class _LoginPageState extends State<LoginPage> {
           "Logged in as: ${profileData['name']}",
           style: TextStyle(
             fontSize: 20.0,
-            
           ),
         ),
       ],
@@ -158,19 +187,31 @@ class _LoginPageState extends State<LoginPage> {
       onPressed: () => twitterlogin(),
     );
   }
+
   /*Google login button*/
-  _displayGoogleBtn(){
+  _displayGoogleBtn() {
     return RaisedButton(
-      child: Text(
-          _contactText),
+      child: Text(_contactText),
+      onPressed: () {
+          googleAuth.signIn().then((signedInUser) {
+            setState(() {
+              _contactText = 'Singed in as $signedInUser.displayName';
+            });
+            print('Signed in as ${signedInUser.displayName}');
+            print('email${signedInUser.email}');
+          }).catchError((e) {
+            print(e);
+          });
+      },
+    );
+  }
+  /*display LinkedIn button*/
+  _displyLinkdinbtn(){
+    return RaisedButton(
+      child: Text('Login with LinkedIn'),
       onPressed: (){
-        googleAuth.signIn().then((signedInUser) {
-          print('Signed in as ${signedInUser.displayName}');
-          _contactText = 'Singed in as $signedInUser.displayName';
-          print('email${signedInUser.email}');
-        }).catchError((e) {
-          print(e);
-        });
+       /* _signInWithLinkedIn();*/
+        print('clicked');
       },
     );
   }
@@ -189,7 +230,8 @@ class _LoginPageState extends State<LoginPage> {
 
     switch (result.status) {
       case TwitterLoginStatus.loggedIn:
-        newMessage = 'Logged in! username: ${result.session.username} \nuserID:${result.session.userId}';
+        newMessage =
+            'Logged in! username: ${result.session.username} \nuserID:${result.session.userId}';
         break;
       case TwitterLoginStatus.cancelledByUser:
         newMessage = 'Login cancelled by user.';
@@ -211,8 +253,9 @@ class _LoginPageState extends State<LoginPage> {
       _message = 'Logged out.';
     });
   }
+
   /*signout from google*/
-  void _signOut(){
+  void _signOut() {
     googleAuth.signOut();
     print('Signed out');
   }
