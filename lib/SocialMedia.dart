@@ -136,6 +136,7 @@ class _LoginPageState extends State<LoginPage> {
           "Logged in as: ${profileData['name']}",
           style: TextStyle(
             fontSize: 20.0,
+            
           ),
         ),
       ],
