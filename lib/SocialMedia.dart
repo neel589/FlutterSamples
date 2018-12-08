@@ -4,8 +4,8 @@ import 'package:flutter_facebook_login/flutter_facebook_login.dart';
 import 'package:flutter_twitter_login/flutter_twitter_login.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
-import 'package:multiimage/instagram.dart';
-import 'package:multiimage/login_presenter.dart';
+/*import 'package:multiimage/instagram.dart';
+import 'package:multiimage/login_presenter.dart';*/
 
 
 GoogleSignIn _googleSignIn = GoogleSignIn(
@@ -25,13 +25,12 @@ class LoginPage extends StatefulWidget {
 
 typedef Future<void> FutureCallBack();
 
-class _LoginPageState extends State<LoginPage> implements LoginViewContract {
+class _LoginPageState extends State<LoginPage>  {
 
   String _loginStatus = 'Press button to log in';
   bool isLoggedIn = false;
   bool _IsLoading;
   var profileData;
-  LoginPresenter _presenter;
   static final TwitterLogin twitterLogin = new TwitterLogin(
     consumerKey: 'bTgJIaZ26HdUAs8HKeIwy4trb',
     consumerSecret: 'sDjGXQpdmqnUk1YTK0AIXDnhhLk1rhPyGFw8iRnZ6XqZkheNSy',
@@ -41,20 +40,12 @@ class _LoginPageState extends State<LoginPage> implements LoginViewContract {
   GoogleSignIn googleAuth = new GoogleSignIn();
   String _message = 'Logged out.';
   var facebookLogin = FacebookLogin();
-  Token token;
-  GlobalKey<ScaffoldState> _scaffoldKey;
-
 
   void onLoginStatusChanged(bool isLoggedIn, {profileData}) {
     setState(() {
       this.isLoggedIn = isLoggedIn;
       this.profileData = profileData;
     });
-  }
-
-  _LoginScreenState(GlobalKey<ScaffoldState> skey) {
-    _presenter = new LoginPresenter(this);
-    _scaffoldKey = skey;
   }
 
   @override
@@ -204,71 +195,7 @@ class _LoginPageState extends State<LoginPage> implements LoginViewContract {
     return RaisedButton(
       child: Text('Login with Instagram'),
       onPressed: (){
-        var widget;
-        if(_IsLoading) {
-          widget = new Center(
-              child: new Padding(
-                  padding: const EdgeInsets.only(left: 16.0, right: 16.0),
-                  child: new CircularProgressIndicator()
-              )
-          );
-        } else if(token != null){
-          widget = new Padding(
-              padding: new EdgeInsets.all(32.0),
-              child: new Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    new Text(
-                      token.full_name,
-                      style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.5),),
-                    new Text(token.username),
-                    new Center(
-                      child: new CircleAvatar(
-                        backgroundImage: new NetworkImage(token.profile_picture),
-                        radius: 50.0,
-                      ),
-                    ),
-                  ]
-              )
-          );
-        }
-        else {
-          widget = new Padding(
-              padding: new EdgeInsets.all(32.0),
-              child: new Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  mainAxisSize: MainAxisSize.min,
-                  children: <Widget>[
-                    new Text(
-                      'Welcome to FlutterAuth,',
-                      style: DefaultTextStyle.of(context).style.apply(fontSizeFactor: 1.5),),
-                    new Text('Login to continue'),
-                    new Center(
-                      child: new Padding(
-                          padding: new EdgeInsets.symmetric(vertical: 160.0),
-                          child:
-                          new InkWell(child:
-                          new Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            mainAxisSize: MainAxisSize.max,
-                            children: <Widget>[
-                              new Image.asset(
-                                'assets/instagram.png',
-                                height: 50.0,
-                                fit: BoxFit.cover,
-                              ),
-                              new Text('Continue with Instagram')
-                            ],
-                          ),onTap: _login,)
-                      ),
-                    ),
-                  ]
-              )
-          );
-        }print('clicked');
-        return widget;
+       print('clicked');
       },
     );
   }
@@ -310,41 +237,9 @@ class _LoginPageState extends State<LoginPage> implements LoginViewContract {
       _message = 'Logged out.';
     });
   }
-
   /*signout from google*/
   void _signOut() {
     googleAuth.signOut();
     print('Signed out');
-  }
-
-  void _login(){
-    setState(() {
-      _IsLoading = true;
-    });
-    _presenter.perform_login();
-  }
-
-  @override
-  void onLoginError(String msg) {
-    // TODO: implement onLoginError
-    setState(() {
-      _IsLoading = false;
-    });
-    showInSnackBar(msg);
-  }
-
-  @override
-  void onLoginScuccess(Token t) {
-    // TODO: implement onLoginScuccess
-    setState(() {
-      _IsLoading = false;
-      token = t;
-    });
-    showInSnackBar('Login successful');
-  }
-  void showInSnackBar(String value) {
-    _scaffoldKey.currentState.showSnackBar(new SnackBar(
-        content: new Text(value)
-    ));
   }
 }
